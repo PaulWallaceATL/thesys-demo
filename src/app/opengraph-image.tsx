@@ -24,14 +24,27 @@ export default function OpengraphImage() {
           fontFamily: "Inter, Arial, sans-serif",
         }}
       >
-        <div style={{ fontSize: 24, letterSpacing: "0.35em", opacity: 0.8 }}>
+        <div
+          style={{
+            display: "flex",
+            fontSize: 24,
+            letterSpacing: "0.35em",
+            opacity: 0.8,
+          }}
+        >
           THESYS C1
         </div>
-        <div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+          }}
+        >
           <p style={{ fontSize: 64, fontWeight: 600, margin: 0 }}>
             Thesys Demo Studio
           </p>
-          <p style={{ fontSize: 32, margin: "16px 0 0", opacity: 0.9 }}>
+          <p style={{ fontSize: 32, margin: 0, opacity: 0.9 }}>
             Stream live Generative UI artifacts with presets & dashboards.
           </p>
         </div>
