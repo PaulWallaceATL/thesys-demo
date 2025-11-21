@@ -1,5 +1,5 @@
 const MODEL_NAME = "c1/anthropic/claude-sonnet-4/v-20250617";
-const THESYS_BASE_URL = "https://api.thesys.dev/v1/embed";
+const THESYS_BASE_URL = "https://api.thesys.dev/v1";
 const RESPONSE_PATH = `${THESYS_BASE_URL}/responses`;
 const BASE_SYSTEM_PROMPT = `You are the Thesys C1 Generative UI engineer.
 Return immersive enterprise-grade artifacts that feel like the showcases at https://www.thesys.dev/artifacts.
@@ -87,6 +87,7 @@ export async function POST(request) {
 
     if (!upstream.ok || !upstream.body) {
       const errorPayload = await upstream.text();
+      console.error("Thesys Responses API error:", upstream.status, errorPayload);
       return new Response(
         JSON.stringify({
           error:
