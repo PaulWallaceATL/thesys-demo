@@ -214,8 +214,19 @@ export default function ChatInterface() {
       <div className="c1-shell">
         <header className="c1-hero">
           <div>
-            <p className="c1-overline">Generative UI Studio</p>
-            <h1>Stream artifacts that feel like the Thesys gallery.</h1>
+            <div className="c1-hero-heading">
+              <img
+                src="/thesys-mark.svg"
+                alt="Thesys demo mark"
+                className="c1-logo"
+                width={48}
+                height={48}
+              />
+              <div>
+                <p className="c1-overline">Generative UI Studio</p>
+                <h1>Stream artifacts that feel like the Thesys gallery.</h1>
+              </div>
+            </div>
             <p className="c1-subtitle">
               Launch decks, KPI boards, and copilots with a single brief. Each
               response is rendered live via C1.
@@ -289,6 +300,15 @@ export default function ChatInterface() {
           </aside>
 
           <section className="c1-main">
+            <div
+              className={`c1-status-banner${isStreaming ? " streaming" : ""}`}
+              role="status"
+              aria-live="polite"
+            >
+              <span className={`c1-status-dot${isStreaming ? " pulse" : ""}`} />
+              {isStreaming ? "Streaming artifact..." : "Ready for your next brief"}
+            </div>
+
             <form className="c1-form" onSubmit={handleSubmit}>
               <input
                 ref={inputRef}
@@ -338,8 +358,14 @@ export default function ChatInterface() {
               </a>
             </div>
 
+            {isStreaming && (
+              <div className="c1-loading-bar" aria-hidden="true">
+                <span />
+              </div>
+            )}
+
             <div className="c1-artifact-shell">
-              {isStreaming && <StreamingSkeleton />}
+              {isStreaming && !c1Response && <StreamingSkeleton />}
               {!isStreaming && !c1Response && <EmptyState />}
               {c1Response && (
                 <C1Component c1Response={c1Response} isStreaming={isStreaming} />

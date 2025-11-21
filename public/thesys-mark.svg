@@ -1,0 +1,19 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Thesys logo mark">
+  <defs>
+    <linearGradient id="thesysGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8a7bff" />
+      <stop offset="50%" stop-color="#5ac8fa" />
+      <stop offset="100%" stop-color="#8cf8d8" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#050b1f" />
+  <path
+    d="M32 90c8.5-14.5 21.5-24 38-24s29.5 9.5 38 24l-12 8c-5.7-9-14-15-26-15s-20.3 6-26 15L32 90Z"
+    fill="url(#thesysGradient)"
+  />
+  <path
+    d="M38 46c0-10.5 9-20 26-20s26 9.5 26 20-9 20-26 20-26-9.5-26-20Zm38 0c0-6.8-5.4-12-12-12s-12 5.2-12 12 5.4 12 12 12 12-5.2 12-12Z"
+    fill="url(#thesysGradient)"
+  />
+</svg>
+

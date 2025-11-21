@@ -1,10 +1,10 @@
 :root {
-  --page-bg: #060a1d;
-  --panel-bg: rgba(11, 16, 37, 0.92);
-  --card-bg: rgba(15, 20, 46, 0.92);
-  --border-color: rgba(226, 232, 255, 0.12);
-  --text-primary: #f5f7ff;
-  --text-muted: #b8c2d8;
+  --page-bg: #050a1b;
+  --panel-bg: rgba(11, 16, 37, 0.9);
+  --card-bg: rgba(17, 23, 52, 0.92);
+  --border-color: rgba(255, 255, 255, 0.12);
+  --text-primary: #f7f8ff;
+  --text-muted: #c1c9de;
   --accent: #7f7bff;
   --accent-strong: #5ac8fa;
   --danger: #ff8b8b;
@@ -18,7 +18,7 @@ body {
   margin: 0;
   font-family: var(--font-geist-sans, "Inter"), system-ui, -apple-system,
     sans-serif;
-  background: radial-gradient(circle at top, #1a2560, var(--page-bg) 65%);
+  background: radial-gradient(circle at top, #1c2456, var(--page-bg) 70%);
   color: var(--text-primary);
   min-height: 100vh;
   line-height: 1.6;
@@ -58,6 +58,23 @@ input {
     rgba(5, 11, 29, 0.92)
   );
   box-shadow: 0 30px 80px rgba(2, 6, 23, 0.45);
+}
+
+.c1-hero-heading {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.c1-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.35rem;
+  box-shadow: 0 10px 25px rgba(5, 11, 29, 0.35);
 }
 
 .c1-overline {
@@ -273,6 +290,36 @@ input {
   backdrop-filter: blur(14px);
 }
 
+.c1-status-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.c1-status-banner.streaming {
+  color: var(--text-primary);
+  border-color: rgba(122, 123, 255, 0.5);
+  background: rgba(127, 123, 255, 0.12);
+}
+
+.c1-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #7dd3fc;
+}
+
+.c1-status-dot.pulse {
+  animation: ping 1.2s ease-in-out infinite;
+  box-shadow: 0 0 0 0 rgba(125, 211, 252, 0.45);
+}
+
 .c1-form {
   display: flex;
   gap: 1rem;
@@ -336,16 +383,41 @@ input {
   font-weight: 600;
 }
 
+.c1-loading-bar {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.c1-loading-bar span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+  animation: slide 1.5s ease-in-out infinite;
+}
+
 .c1-artifact-shell {
   min-height: 420px;
   border-radius: 1.25rem;
-  border: 1px solid rgba(236, 240, 255, 0.18);
-  background: rgba(8, 12, 35, 0.7);
-  padding: 1rem;
+  border: 1px solid rgba(10, 15, 31, 0.08);
+  background: rgba(249, 250, 255, 0.98);
+  padding: 1.25rem;
   position: relative;
   overflow: auto;
   max-height: min(75vh, 760px);
-  backdrop-filter: blur(18px);
+  box-shadow: 0 20px 55px rgba(5, 11, 29, 0.2);
+  color: #0b1220;
+}
+
+.c1-artifact-shell :where(p, li, span, td, th, strong, h1, h2, h3, h4, h5, h6) {
+  color: #0b1220;
+}
+
+.c1-artifact-shell :where(a, button) {
+  color: #2b44ff;
 }
 
 .c1-skeleton {
@@ -418,6 +490,26 @@ input {
   }
   100% {
     opacity: 0.7;
+  }
+}
+
+@keyframes ping {
+  0% {
+    transform: scale(0.85);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+@keyframes slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
   }
 }
 
