@@ -15,34 +15,27 @@ const geistMono = Geist_Mono({
 const APP_TITLE = "Thesys Demo Studio";
 const APP_DESCRIPTION =
   "Stream Thesys C1 artifacts with presets, live statuses, and Generative UI previews.";
+const APP_URL = "https://thesys-demo.vercel.app";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(APP_URL),
   title: APP_TITLE,
   description: APP_DESCRIPTION,
   icons: {
-    icon: "/thesys-mark.svg",
-    shortcut: "/thesys-mark.svg",
-    apple: "/thesys-mark.svg",
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/apple-icon.png",
   },
   openGraph: {
     title: APP_TITLE,
     description: APP_DESCRIPTION,
-    url: "https://thesys-demo.vercel.app",
+    url: APP_URL,
     type: "website",
-    images: [
-      {
-        url: "/thesys-mark.svg",
-        width: 512,
-        height: 512,
-        alt: "Thesys demo mark",
-      },
-    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: APP_TITLE,
     description: APP_DESCRIPTION,
-    images: ["/thesys-mark.svg"],
   },
 };
 

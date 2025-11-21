@@ -70,66 +70,6 @@ const QUICK_ACTIONS = [
   },
 ];
 
-const SAMPLE_ARTIFACT = `<content>
-<hero>
-  <title>Launch Control Surface</title>
-  <description>Sample Thesys artifact showing KPI cards, tactic chips, and launch readiness insights.</description>
-</hero>
-</content>
-<artifact type="report" id="demo-sample">
-  <section title="Momentum Snapshot">
-    <kpi label="ARR Impact" value="$2.8M" trend="+32% QoQ" badge="On track" />
-    <kpi label="Pilot Cohorts" value="14" trend="+4 signed" badge="Expanding" />
-    <kpi label="Launch Confidence" value="92%" trend="+6 pts" badge="Green" />
-  </section>
-  <section title="Key Tracks">
-    <pill status="ready">Product QA</pill>
-    <pill status="blocked">Integration APIs</pill>
-    <pill status="ready">Revenue Enablement</pill>
-  </section>
-  <section title="Next Actions">
-    <card title="Finalize Pricing Sheets" owner="RevOps" due="Jun 10" priority="High">
-      <bullet>Confirm 3-tier packaging</bullet>
-      <bullet>Attach ROI calculator</bullet>
-    </card>
-    <card title="Clinician Pilot Stories" owner="Customer Marketing" due="Jun 13" priority="Medium">
-      <bullet>Capture quote + KPI lift</bullet>
-      <bullet>Prep launch microsite</bullet>
-    </card>
-  </section>
-  <table title="Launch Readiness Tracker">
-    <columns>
-      <column>Workstream</column>
-      <column>Status</column>
-      <column>Owner</column>
-      <column>Priority</column>
-    </columns>
-    <rows>
-      <row>
-        <cell>Billing automation</cell>
-        <cell>Completing final QA</cell>
-        <cell>Product</cell>
-        <cell>High</cell>
-      </row>
-      <row>
-        <cell>Partner integrations</cell>
-        <cell>Pending contract addendum</cell>
-        <cell>Alliances</cell>
-        <cell>Medium</cell>
-      </row>
-      <row>
-        <cell>Sales enablement</cell>
-        <cell>Playbooks drafted</cell>
-        <cell>Revenue Enablement</cell>
-        <cell>Medium</cell>
-      </row>
-    </rows>
-  </table>
-  <callout tone="success" title="Sample artifact">
-    This starter layout is rendered with the Thesys C1 Generative UI SDK. Run a preset to replace it with a live artifact.
-  </callout>
-</artifact>`;
-
 const createClientId = () => {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID();
@@ -153,6 +93,57 @@ const StreamingSkeleton = () => (
     </div>
     <div className="c1-skeleton-block" />
     <div className="c1-skeleton-block short" />
+  </div>
+);
+
+const PlaceholderArtifact = () => (
+  <div className="c1-placeholder-shell">
+    <div className="c1-placeholder-header">
+      <div>
+        <p>ClinixAI Launch HQ</p>
+        <h3>Live launch control surface</h3>
+      </div>
+      <div className="c1-placeholder-badges">
+        <span>Launch readiness · 92%</span>
+        <span>ARR impact · $2.8M</span>
+      </div>
+    </div>
+    <div className="c1-placeholder-grid">
+      <div className="c1-placeholder-card">
+        <p>North Star KPI</p>
+        <strong>4.2M processed claims</strong>
+        <span className="up">+18% vs last sprint</span>
+      </div>
+      <div className="c1-placeholder-card">
+        <p>Pilot Cohorts</p>
+        <strong>12 active</strong>
+        <span className="neutral">4 onboarding</span>
+      </div>
+      <div className="c1-placeholder-card">
+        <p>Automation coverage</p>
+        <strong>78%</strong>
+        <span className="down">Target 84%</span>
+      </div>
+    </div>
+    <div className="c1-placeholder-table">
+      <div className="c1-placeholder-table-head">
+        <span>Workstream</span>
+        <span>Status</span>
+        <span>Owner</span>
+        <span>Priority</span>
+      </div>
+      {[
+        ["API integration", "QA in progress", "Platform", "High"],
+        ["Rev enablement", "Playbooks approved", "Revenue", "Medium"],
+        ["Compliance", "Awaiting SOC3 letter", "Risk", "Medium"],
+      ].map((row) => (
+        <div className="c1-placeholder-table-row" key={row[0]}>
+          {row.map((cell) => (
+            <span key={cell}>{cell}</span>
+          ))}
+        </div>
+      ))}
+    </div>
   </div>
 );
 
@@ -448,11 +439,10 @@ export default function ChatInterface() {
 
             <div className="c1-artifact-shell">
               {isStreaming && !c1Response && <StreamingSkeleton />}
-              {c1Response ? (
+              {!isStreaming && c1Response && (
                 <C1Component c1Response={c1Response} isStreaming={isStreaming} />
-              ) : (
-                <C1Component c1Response={SAMPLE_ARTIFACT} isStreaming={false} />
               )}
+              {!isStreaming && !c1Response && <PlaceholderArtifact />}
             </div>
 
             {!c1Response && !isStreaming && (

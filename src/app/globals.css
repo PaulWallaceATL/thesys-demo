@@ -449,6 +449,112 @@ input {
   height: 70px;
 }
 
+.c1-placeholder-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.c1-placeholder-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(8, 12, 35, 0.08);
+}
+
+.c1-placeholder-header h3 {
+  margin: 0.25rem 0 0;
+  color: #0b1220;
+}
+
+.c1-placeholder-header p {
+  margin: 0;
+  color: #4b5565;
+  font-size: 0.85rem;
+}
+
+.c1-placeholder-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.c1-placeholder-badges span {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(8, 12, 35, 0.06);
+  font-size: 0.75rem;
+}
+
+.c1-placeholder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.85rem;
+}
+
+.c1-placeholder-card {
+  border-radius: 1rem;
+  border: 1px solid rgba(8, 12, 35, 0.1);
+  padding: 0.85rem 1rem;
+  background: rgba(8, 12, 35, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.c1-placeholder-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #4b5565;
+}
+
+.c1-placeholder-card strong {
+  font-size: 1rem;
+  color: #0b1220;
+}
+
+.c1-placeholder-card span.up {
+  color: #16a34a;
+}
+
+.c1-placeholder-card span.down {
+  color: #dc2626;
+}
+
+.c1-placeholder-card span.neutral {
+  color: #6b7280;
+}
+
+.c1-placeholder-table {
+  border: 1px solid rgba(8, 12, 35, 0.1);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.c1-placeholder-table-head,
+.c1-placeholder-table-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+}
+
+.c1-placeholder-table-head {
+  background: rgba(8, 12, 35, 0.04);
+  font-weight: 600;
+}
+
+.c1-placeholder-table-row:nth-child(even) {
+  background: rgba(8, 12, 35, 0.02);
+}
+
+.c1-placeholder-table-row span {
+  color: #4b5565;
+}
+
 .c1-error {
   color: var(--danger);
   margin: 0;
