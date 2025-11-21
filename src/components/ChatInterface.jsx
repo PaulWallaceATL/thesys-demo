@@ -40,6 +40,12 @@ const HERO_STATS = [
   { label: "Interactive primitives", value: "140+" },
 ];
 
+const HERO_PILLS = [
+  "Live UI streaming",
+  "Share-ready artifacts",
+  "Enterprise guardrails",
+];
+
 const createClientId = () => {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID();
@@ -214,6 +220,11 @@ export default function ChatInterface() {
               Launch decks, KPI boards, and copilots with a single brief. Each
               response is rendered live via C1.
             </p>
+            <div className="c1-hero-pills">
+              {HERO_PILLS.map((pill) => (
+                <span key={pill}>{pill}</span>
+              ))}
+            </div>
           </div>
           <div className="c1-stats">
             {HERO_STATS.map((stat) => (
@@ -253,25 +264,27 @@ export default function ChatInterface() {
               {history.length === 0 && (
                 <p className="c1-placeholder">Nothing yet—run your first brief.</p>
               )}
-              <ul className="c1-history">
-                {history.map((entry) => (
-                  <li key={entry.id}>
-                    <button
-                      type="button"
-                      className={`c1-history-button${
-                        selectedHistoryId === entry.id ? " active" : ""
-                      }`}
-                      onClick={() => handleHistorySelect(entry)}
-                    >
-                      <div>
-                        <strong>{entry.preset}</strong>
-                        <p>{entry.prompt}</p>
-                      </div>
-                      <span>{formatTimestamp(entry.createdAt)}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <div className="c1-history-scroll">
+                <ul className="c1-history">
+                  {history.map((entry) => (
+                    <li key={entry.id}>
+                      <button
+                        type="button"
+                        className={`c1-history-button${
+                          selectedHistoryId === entry.id ? " active" : ""
+                        }`}
+                        onClick={() => handleHistorySelect(entry)}
+                      >
+                        <div>
+                          <strong>{entry.preset}</strong>
+                          <p>{entry.prompt}</p>
+                        </div>
+                        <span>{formatTimestamp(entry.createdAt)}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </aside>
 
@@ -292,7 +305,11 @@ export default function ChatInterface() {
               </button>
             </form>
 
-            {error && <p className="c1-error">{error}</p>}
+            {error && (
+              <p className="c1-error" role="status" aria-live="polite">
+                {error}
+              </p>
+            )}
 
             <div className="c1-action-row">
               <button
