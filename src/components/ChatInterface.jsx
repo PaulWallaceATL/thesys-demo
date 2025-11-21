@@ -46,6 +46,90 @@ const HERO_PILLS = [
   "Enterprise guardrails",
 ];
 
+const QUICK_ACTIONS = [
+  {
+    label: "Slides & decks",
+    subtitle: "Board-ready pages with CTA tiles",
+    prompt:
+      "Assemble a 6-slide executive deck for an AI claims feature launch. Include hero headline, KPI tiles, roadmap swim-lanes, deal CTA buttons, and a risks + mitigations panel.",
+    intent: "Slides & decks",
+  },
+  {
+    label: "Dashboards",
+    subtitle: "Live KPI cockpit with filters",
+    prompt:
+      "Create a realtime KPI dashboard for a revenue operations team featuring stat cards, trend chips, backlog widgets, and a prioritized action list.",
+    intent: "Dashboards",
+  },
+  {
+    label: "Workflow copilots",
+    subtitle: "Interactive decision tree",
+    prompt:
+      "Generate a workflow copilot that triages enterprise support tickets with branching decisions, alert badges, success metrics, and handoff buttons.",
+    intent: "Workflow copilots",
+  },
+];
+
+const SAMPLE_ARTIFACT = `<content>
+<hero>
+  <title>Launch Control Surface</title>
+  <description>Sample Thesys artifact showing KPI cards, tactic chips, and launch readiness insights.</description>
+</hero>
+</content>
+<artifact type="report" id="demo-sample">
+  <section title="Momentum Snapshot">
+    <kpi label="ARR Impact" value="$2.8M" trend="+32% QoQ" badge="On track" />
+    <kpi label="Pilot Cohorts" value="14" trend="+4 signed" badge="Expanding" />
+    <kpi label="Launch Confidence" value="92%" trend="+6 pts" badge="Green" />
+  </section>
+  <section title="Key Tracks">
+    <pill status="ready">Product QA</pill>
+    <pill status="blocked">Integration APIs</pill>
+    <pill status="ready">Revenue Enablement</pill>
+  </section>
+  <section title="Next Actions">
+    <card title="Finalize Pricing Sheets" owner="RevOps" due="Jun 10" priority="High">
+      <bullet>Confirm 3-tier packaging</bullet>
+      <bullet>Attach ROI calculator</bullet>
+    </card>
+    <card title="Clinician Pilot Stories" owner="Customer Marketing" due="Jun 13" priority="Medium">
+      <bullet>Capture quote + KPI lift</bullet>
+      <bullet>Prep launch microsite</bullet>
+    </card>
+  </section>
+  <table title="Launch Readiness Tracker">
+    <columns>
+      <column>Workstream</column>
+      <column>Status</column>
+      <column>Owner</column>
+      <column>Priority</column>
+    </columns>
+    <rows>
+      <row>
+        <cell>Billing automation</cell>
+        <cell>Completing final QA</cell>
+        <cell>Product</cell>
+        <cell>High</cell>
+      </row>
+      <row>
+        <cell>Partner integrations</cell>
+        <cell>Pending contract addendum</cell>
+        <cell>Alliances</cell>
+        <cell>Medium</cell>
+      </row>
+      <row>
+        <cell>Sales enablement</cell>
+        <cell>Playbooks drafted</cell>
+        <cell>Revenue Enablement</cell>
+        <cell>Medium</cell>
+      </row>
+    </rows>
+  </table>
+  <callout tone="success" title="Sample artifact">
+    This starter layout is rendered with the Thesys C1 Generative UI SDK. Run a preset to replace it with a live artifact.
+  </callout>
+</artifact>`;
+
 const createClientId = () => {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID();
@@ -69,17 +153,6 @@ const StreamingSkeleton = () => (
     </div>
     <div className="c1-skeleton-block" />
     <div className="c1-skeleton-block short" />
-  </div>
-);
-
-const EmptyState = () => (
-  <div className="c1-empty-state">
-    <p>Choose a preset brief to see a live C1 artifact stream together.</p>
-    <div className="c1-empty-pills">
-      <span>Slides & decks</span>
-      <span>Dashboards</span>
-      <span>Workflow copilots</span>
-    </div>
   </div>
 );
 
@@ -109,14 +182,14 @@ export default function ChatInterface() {
     inputRef.current?.focus();
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const prompt = input.trim();
-    if (!prompt) {
+  const sendPrompt = async ({ prompt, intent, label }) => {
+    const trimmedPrompt = prompt.trim();
+    if (!trimmedPrompt) {
+      setError("Please add a prompt before generating.");
       return;
     }
 
-    const userMessage = { role: "user", content: prompt };
+    const userMessage = { role: "user", content: trimmedPrompt };
     const nextMessages = [...messages, userMessage];
 
     setMessages(nextMessages);
@@ -132,7 +205,7 @@ export default function ChatInterface() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: nextMessages,
-          intent: activePreset?.intent,
+          intent,
         }),
       });
 
@@ -156,22 +229,39 @@ export default function ChatInterface() {
 
       const entry = {
         id: createClientId(),
-        prompt,
+        prompt: trimmedPrompt,
         response: streamedText,
-        preset: activePreset?.title ?? "Custom brief",
+        preset: label ?? activePreset?.title ?? "Custom brief",
         createdAt: Date.now(),
       };
 
       setHistory((previous) => [entry, ...previous].slice(0, 6));
       setSelectedHistoryId(entry.id);
       setMessages([...nextMessages, { role: "assistant", content: streamedText }]);
-      setActivePreset(null);
     } catch (err) {
       console.error(err);
       setError("Unable to reach the Thesys API. Please try again.");
     } finally {
       setIsStreaming(false);
+      setActivePreset(null);
     }
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    await sendPrompt({
+      prompt: input,
+      intent: activePreset?.intent,
+      label: activePreset?.title,
+    });
+  };
+
+  const handleQuickAction = async (action) => {
+    await sendPrompt({
+      prompt: action.prompt,
+      intent: action.intent,
+      label: action.label,
+    });
   };
 
   const handleHistorySelect = (entry) => {
@@ -348,14 +438,6 @@ export default function ChatInterface() {
               >
                 Save artifact
               </button>
-              <a
-                className="c1-link"
-                href="https://www.thesys.dev/artifacts"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Explore gallery ↗
-              </a>
             </div>
 
             {isStreaming && (
@@ -366,11 +448,31 @@ export default function ChatInterface() {
 
             <div className="c1-artifact-shell">
               {isStreaming && !c1Response && <StreamingSkeleton />}
-              {!isStreaming && !c1Response && <EmptyState />}
-              {c1Response && (
+              {c1Response ? (
                 <C1Component c1Response={c1Response} isStreaming={isStreaming} />
+              ) : (
+                <C1Component c1Response={SAMPLE_ARTIFACT} isStreaming={false} />
               )}
             </div>
+
+            {!c1Response && !isStreaming && (
+              <div className="c1-quick-panel">
+                <p>Jumpstart with a curated artifact template.</p>
+                <div className="c1-quick-actions">
+                  {QUICK_ACTIONS.map((action) => (
+                    <button
+                      type="button"
+                      key={action.label}
+                      className="c1-quick-action"
+                      onClick={() => handleQuickAction(action)}
+                    >
+                      <strong>{action.label}</strong>
+                      <span>{action.subtitle}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         </div>
       </div>
