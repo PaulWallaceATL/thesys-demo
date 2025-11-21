@@ -1,7 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from "react";
-import { C1Component, ThemeProvider } from "@thesysai/genui-sdk";
+import {
+  C1Component,
+  ThemeProvider,
+  processStreamedMessage,
+} from "@thesysai/genui-sdk";
 
 const PROMPT_PRESETS = [
   {
@@ -147,6 +151,24 @@ const PlaceholderArtifact = () => (
   </div>
 );
 
+const reduceAssistantMessage = (assistantMessage) => {
+  if (!assistantMessage || !Array.isArray(assistantMessage.message)) {
+    return "";
+  }
+
+  return assistantMessage.message
+    .map((part) => {
+      if (part?.type === "template" && part.templateProps?.content) {
+        return part.templateProps.content;
+      }
+      if (part?.type === "text" && part.text) {
+        return part.text;
+      }
+      return "";
+    })
+    .join("");
+};
+
 export default function ChatInterface() {
   const inputRef = useRef(null);
   const [input, setInput] = useState("");
@@ -193,42 +215,59 @@ export default function ChatInterface() {
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "text/event-stream",
+        },
         body: JSON.stringify({
           messages: nextMessages,
           intent,
         }),
+        cache: "no-store",
       });
 
       if (!response.ok || !response.body) {
-        throw new Error("Streaming response unavailable.");
+        throw new Error(
+          `Streaming response unavailable (${response.statusText}).`,
+        );
       }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let streamedText = "";
+      let finalAssistantMessage = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          break;
-        }
+      const handleMessageUpdate = (assistantMessage) => {
+        const combined = reduceAssistantMessage(assistantMessage);
+        finalAssistantMessage = combined;
+        setC1Response(combined);
+      };
 
-        streamedText += decoder.decode(value, { stream: true });
-        setC1Response(streamedText);
+      await processStreamedMessage({
+        response,
+        id: createClientId(),
+        createMessage: handleMessageUpdate,
+        updateMessage: handleMessageUpdate,
+        deleteMessage: () => {},
+      });
+
+      if (finalAssistantMessage && !finalAssistantMessage.includes("<artifact")) {
+        console.warn(
+          "[Thesys] Stream completed without <artifact> tags. Prompt or model output may need adjustment.",
+        );
       }
 
       const entry = {
         id: createClientId(),
         prompt: trimmedPrompt,
-        response: streamedText,
+        response: finalAssistantMessage,
         preset: label ?? activePreset?.title ?? "Custom brief",
         createdAt: Date.now(),
       };
 
       setHistory((previous) => [entry, ...previous].slice(0, 6));
       setSelectedHistoryId(entry.id);
-      setMessages([...nextMessages, { role: "assistant", content: streamedText }]);
+      setMessages([
+        ...nextMessages,
+        { role: "assistant", content: finalAssistantMessage },
+      ]);
     } catch (err) {
       console.error(err);
       setError("Unable to reach the Thesys API. Please try again.");

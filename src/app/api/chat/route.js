@@ -1,47 +1,12 @@
-import OpenAI from "openai";
-
 const MODEL_NAME = "c1/anthropic/claude-sonnet-4/v-20250617";
 const THESYS_BASE_URL = "https://api.thesys.dev/v1/embed";
-const encoder = new TextEncoder();
-
+const RESPONSE_PATH = `${THESYS_BASE_URL}/responses`;
 const BASE_SYSTEM_PROMPT = `You are the Thesys C1 Generative UI engineer.
 Return immersive enterprise-grade artifacts that feel like the showcases at https://www.thesys.dev/artifacts.
 Stream valid C1 markup using <content>...</content> for narrative copy and <artifact type="report|slides|dashboard|canvas" id="...">...</artifact> for interactive layouts.
 Inside artifacts, use rich constructs such as <section> with headings, <stat>, <kpi>, <table>, <callout>, <timeline>, <pill>, and CTA rows.
 Always include chips, structured bullets, or multi-column grids when summarising data, and wrap supporting context inside <context> when helpful.
 Never emit markdown or JSON—only XML-like C1 tags.`;
-
-function formatChunk(delta) {
-  if (!delta) {
-    return "";
-  }
-
-  if (typeof delta === "string") {
-    return delta;
-  }
-
-  if (Array.isArray(delta)) {
-    return delta
-      .map((entry) => {
-        if (!entry) {
-          return "";
-        }
-
-        if (typeof entry === "string") {
-          return entry;
-        }
-
-        return entry.text ?? "";
-      })
-      .join("");
-  }
-
-  if (typeof delta === "object" && delta.text) {
-    return delta.text;
-  }
-
-  return "";
-}
 
 function normalizeMessages(messages = []) {
   return messages
@@ -100,41 +65,46 @@ export async function POST(request) {
     });
   }
 
-  const client = new OpenAI({
-    apiKey,
-    baseURL: THESYS_BASE_URL,
-  });
+  const payload = {
+    model: MODEL_NAME,
+    input: [
+      { role: "system", content: buildSystemMessage(intent) },
+      ...sanitizedMessages,
+    ],
+    modalities: ["text", "c1"],
+    stream: true,
+  };
 
   try {
-    const completion = await client.chat.completions.create({
-      model: MODEL_NAME,
-      messages: [
-        { role: "system", content: buildSystemMessage(intent) },
-        ...sanitizedMessages,
-      ],
-      temperature: 0.3,
-      stream: true,
-    });
-
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const part of completion) {
-            const chunkText = formatChunk(part.choices?.[0]?.delta?.content);
-            if (chunkText) {
-              controller.enqueue(encoder.encode(chunkText));
-            }
-          }
-          controller.close();
-        } catch (error) {
-          controller.error(error);
-        }
-      },
-    });
-
-    return new Response(stream, {
+    const upstream = await fetch(RESPONSE_PATH, {
+      method: "POST",
       headers: {
-        "Content-Type": "text/plain; charset=utf-8",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!upstream.ok || !upstream.body) {
+      const errorPayload = await upstream.text();
+      return new Response(
+        JSON.stringify({
+          error:
+            errorPayload || "Failed to stream response from Thesys Responses API",
+        }),
+        {
+          status: upstream.status || 502,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    return new Response(upstream.body, {
+      status: 200,
+      headers: {
+        "Content-Type":
+          upstream.headers.get("content-type") ??
+          "text/event-stream; charset=utf-8",
         "Cache-Control": "no-cache, no-transform",
         Connection: "keep-alive",
       },
