@@ -1,11 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from "react";
-import {
-  C1Component,
-  ThemeProvider,
-  processStreamedMessage,
-} from "@thesysai/genui-sdk";
+import { C1Component, ThemeProvider } from "@thesysai/genui-sdk";
 
 const PROMPT_PRESETS = [
   {
@@ -39,38 +35,38 @@ const PROMPT_PRESETS = [
 ];
 
 const HERO_STATS = [
-  { label: "Artifacts rendered", value: "3.2k+" },
-  { label: "Avg. assembly time", value: "4.6s" },
-  { label: "Interactive primitives", value: "140+" },
+  { label: "UI primitives", value: "140+" },
+  { label: "Layout types", value: "20+" },
+  { label: "Live data hooks", value: "Built-in" },
 ];
 
 const HERO_PILLS = [
-  "Live UI streaming",
-  "Share-ready artifacts",
-  "Enterprise guardrails",
+  "Generate structured UI from intent",
+  "Inspect the raw C1 markup",
+  "Swap prompts to change artifacts",
 ];
 
 const QUICK_ACTIONS = [
   {
-    label: "Slides & decks",
-    subtitle: "Board-ready pages with CTA tiles",
+    label: "Strategy brief",
+    subtitle: "Executive-ready plans with CTAs & KPIs",
     prompt:
-      "Assemble a 6-slide executive deck for an AI claims feature launch. Include hero headline, KPI tiles, roadmap swim-lanes, deal CTA buttons, and a risks + mitigations panel.",
-    intent: "Slides & decks",
+      "Draft a GTM strategy artifact for a healthcare claims automation feature. Include KPI scorecards, launch timeline, risk register, and executive asks.",
+    intent: "Strategy brief",
   },
   {
-    label: "Dashboards",
-    subtitle: "Live KPI cockpit with filters",
+    label: "Ops cockpit",
+    subtitle: "Dashboards with tags, filters, alerts",
     prompt:
-      "Create a realtime KPI dashboard for a revenue operations team featuring stat cards, trend chips, backlog widgets, and a prioritized action list.",
-    intent: "Dashboards",
+      "Create an operations cockpit for a revenue org. Include KPI cards, backlog widgets, escalation alerts, and an action checklist with owners.",
+    intent: "Operations dashboard",
   },
   {
-    label: "Workflow copilots",
-    subtitle: "Interactive decision tree",
+    label: "Workflow copilot",
+    subtitle: "Decision trees + action buttons",
     prompt:
-      "Generate a workflow copilot that triages enterprise support tickets with branching decisions, alert badges, success metrics, and handoff buttons.",
-    intent: "Workflow copilots",
+      "Generate a ticket-triage copilot artifact that uses decision pillars, chips, CTA buttons, and per-step guidance for onboarding agents.",
+    intent: "Workflow copilot",
   },
 ];
 
@@ -86,19 +82,6 @@ const formatTimestamp = (timestamp) =>
     hour: "numeric",
     minute: "numeric",
   }).format(timestamp);
-
-const StreamingSkeleton = () => (
-  <div className="c1-skeleton">
-    <div className="c1-skeleton-title" />
-    <div className="c1-skeleton-row">
-      <div className="c1-skeleton-card" />
-      <div className="c1-skeleton-card" />
-      <div className="c1-skeleton-card" />
-    </div>
-    <div className="c1-skeleton-block" />
-    <div className="c1-skeleton-block short" />
-  </div>
-);
 
 const PlaceholderArtifact = () => (
   <div className="c1-placeholder-shell">
@@ -151,24 +134,6 @@ const PlaceholderArtifact = () => (
   </div>
 );
 
-const reduceAssistantMessage = (assistantMessage) => {
-  if (!assistantMessage || !Array.isArray(assistantMessage.message)) {
-    return "";
-  }
-
-  return assistantMessage.message
-    .map((part) => {
-      if (part?.type === "template" && part.templateProps?.content) {
-        return part.templateProps.content;
-      }
-      if (part?.type === "text" && part.text) {
-        return part.text;
-      }
-      return "";
-    })
-    .join("");
-};
-
 export default function ChatInterface() {
   const inputRef = useRef(null);
   const [input, setInput] = useState("");
@@ -176,10 +141,12 @@ export default function ChatInterface() {
   const [c1Response, setC1Response] = useState("");
   const [history, setHistory] = useState([]);
   const [selectedHistoryId, setSelectedHistoryId] = useState(null);
-  const [isStreaming, setIsStreaming] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState("");
   const [activePreset, setActivePreset] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [rawMarkup, setRawMarkup] = useState("");
+  const [activeView, setActiveView] = useState("rendered");
 
   useEffect(() => {
     if (!copied) {
@@ -208,17 +175,15 @@ export default function ChatInterface() {
     setMessages(nextMessages);
     setInput("");
     setError("");
-    setIsStreaming(true);
+    setIsGenerating(true);
     setC1Response("");
+    setRawMarkup("");
     setSelectedHistoryId(null);
 
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "text/event-stream",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: nextMessages,
           intent,
@@ -226,38 +191,19 @@ export default function ChatInterface() {
         cache: "no-store",
       });
 
-      if (!response.ok || !response.body) {
-        throw new Error(
-          `Streaming response unavailable (${response.statusText}).`,
-        );
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to reach the Thesys API.");
       }
 
-      let finalAssistantMessage = "";
-
-      const handleMessageUpdate = (assistantMessage) => {
-        const combined = reduceAssistantMessage(assistantMessage);
-        finalAssistantMessage = combined;
-        setC1Response(combined);
-      };
-
-      await processStreamedMessage({
-        response,
-        id: createClientId(),
-        createMessage: handleMessageUpdate,
-        updateMessage: handleMessageUpdate,
-        deleteMessage: () => {},
-      });
-
-      if (finalAssistantMessage && !finalAssistantMessage.includes("<artifact")) {
-        console.warn(
-          "[Thesys] Stream completed without <artifact> tags. Prompt or model output may need adjustment.",
-        );
+      if (!payload.artifact) {
+        throw new Error("Thesys returned an empty artifact.");
       }
 
       const entry = {
         id: createClientId(),
         prompt: trimmedPrompt,
-        response: finalAssistantMessage,
+        response: payload.artifact,
         preset: label ?? activePreset?.title ?? "Custom brief",
         createdAt: Date.now(),
       };
@@ -266,13 +212,20 @@ export default function ChatInterface() {
       setSelectedHistoryId(entry.id);
       setMessages([
         ...nextMessages,
-        { role: "assistant", content: finalAssistantMessage },
+        { role: "assistant", content: payload.artifact },
       ]);
+      setC1Response(payload.artifact);
+      setRawMarkup(payload.artifact);
+      setActiveView("rendered");
     } catch (err) {
       console.error(err);
-      setError("Unable to reach the Thesys API. Please try again.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to reach the Thesys API. Please try again.",
+      );
     } finally {
-      setIsStreaming(false);
+      setIsGenerating(false);
       setActivePreset(null);
     }
   };
@@ -297,15 +250,17 @@ export default function ChatInterface() {
   const handleHistorySelect = (entry) => {
     setSelectedHistoryId(entry.id);
     setC1Response(entry.response);
-    setIsStreaming(false);
+    setRawMarkup(entry.response);
+    setIsGenerating(false);
+    setActiveView("rendered");
   };
 
   const handleCopy = async () => {
-    if (!c1Response) {
+    if (!rawMarkup) {
       return;
     }
     try {
-      await navigator.clipboard?.writeText(c1Response);
+      await navigator.clipboard?.writeText(rawMarkup);
       setCopied(true);
     } catch (err) {
       console.error(err);
@@ -314,11 +269,11 @@ export default function ChatInterface() {
   };
 
   const handleDownload = () => {
-    if (!c1Response) {
+    if (!rawMarkup) {
       return;
     }
 
-    const blob = new Blob([c1Response], { type: "text/xml" });
+    const blob = new Blob([rawMarkup], { type: "text/xml" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -343,13 +298,14 @@ export default function ChatInterface() {
                 height={48}
               />
               <div>
-                <p className="c1-overline">Generative UI Studio</p>
-                <h1>Stream artifacts that feel like the Thesys gallery.</h1>
+                <p className="c1-overline">C1 Generative UI</p>
+                <h1>See what the Thesys API actually returns.</h1>
               </div>
             </div>
             <p className="c1-subtitle">
-              Launch decks, KPI boards, and copilots with a single brief. Each
-              response is rendered live via C1.
+              Type a brief → receive structured C1 markup → render it instantly.
+              This demo focuses on the response contract—how Thesys translates
+              intent into UI artifacts.
             </p>
             <div className="c1-hero-pills">
               {HERO_PILLS.map((pill) => (
@@ -421,12 +377,14 @@ export default function ChatInterface() {
 
           <section className="c1-main">
             <div
-              className={`c1-status-banner${isStreaming ? " streaming" : ""}`}
+              className={`c1-status-banner${isGenerating ? " streaming" : ""}`}
               role="status"
               aria-live="polite"
             >
-              <span className={`c1-status-dot${isStreaming ? " pulse" : ""}`} />
-              {isStreaming ? "Streaming artifact..." : "Ready for your next brief"}
+              <span className={`c1-status-dot${isGenerating ? " pulse" : ""}`} />
+              {isGenerating
+                ? "Generating C1 artifact..."
+                : "Ready to translate prompts into UI."}
             </div>
 
             <form className="c1-form" onSubmit={handleSubmit}>
@@ -436,12 +394,16 @@ export default function ChatInterface() {
                 value={input}
                 placeholder="Ask Thesys to build an artifact..."
                 onChange={(event) => setInput(event.target.value)}
-                disabled={isStreaming}
+                disabled={isGenerating}
                 aria-label="Chat prompt"
                 className="c1-input"
               />
-              <button type="submit" className="c1-button" disabled={isStreaming}>
-                {isStreaming ? "Streaming..." : "Generate"}
+              <button
+                type="submit"
+                className="c1-button"
+                disabled={isGenerating}
+              >
+                {isGenerating ? "Generating..." : "Generate artifact"}
               </button>
             </form>
 
@@ -456,7 +418,7 @@ export default function ChatInterface() {
                 type="button"
                 className="c1-secondary-button"
                 onClick={handleCopy}
-                disabled={!c1Response}
+                disabled={!rawMarkup}
               >
                 {copied ? "Copied ✓" : "Copy artifact markup"}
               </button>
@@ -464,27 +426,54 @@ export default function ChatInterface() {
                 type="button"
                 className="c1-secondary-button"
                 onClick={handleDownload}
-                disabled={!c1Response}
+                disabled={!rawMarkup}
               >
                 Save artifact
               </button>
             </div>
 
-            {isStreaming && (
+            {isGenerating && (
               <div className="c1-loading-bar" aria-hidden="true">
                 <span />
               </div>
             )}
 
-            <div className="c1-artifact-shell">
-              {isStreaming && !c1Response && <StreamingSkeleton />}
-              {!isStreaming && c1Response && (
-                <C1Component c1Response={c1Response} isStreaming={isStreaming} />
-              )}
-              {!isStreaming && !c1Response && <PlaceholderArtifact />}
+            <div className="c1-view-toggle" role="tablist">
+              <button
+                type="button"
+                className={activeView === "rendered" ? "active" : ""}
+                onClick={() => setActiveView("rendered")}
+                role="tab"
+              >
+                Rendered artifact
+              </button>
+              <button
+                type="button"
+                className={activeView === "markup" ? " active" : ""}
+                onClick={() => setActiveView("markup")}
+                role="tab"
+              >
+                Raw C1 markup
+              </button>
             </div>
 
-            {!c1Response && !isStreaming && (
+            <div className="c1-artifact-shell">
+              {activeView === "markup" ? (
+                rawMarkup ? (
+                  <pre className="c1-raw-view">{rawMarkup}</pre>
+                ) : (
+                  <div className="c1-placeholder-shell">
+                    <p>Generate an artifact to inspect the schema.</p>
+                  </div>
+                )
+              ) : c1Response ? (
+                <C1Component c1Response={c1Response} isStreaming={false} />
+              ) : (
+                <PlaceholderArtifact />
+              )}
+            </div>
+
+            {!c1Response && !isGenerating && (
               <div className="c1-quick-panel">
                 <p>Jumpstart with a curated artifact template.</p>
                 <div className="c1-quick-actions">
@@ -502,6 +491,24 @@ export default function ChatInterface() {
                 </div>
               </div>
             )}
+
+            <div className="c1-info-panel">
+              <p>What this demo highlights</p>
+              <div className="c1-info-items">
+                <div>
+                  <strong>Structured UI</strong>
+                  <span>Prompts turn into C1 markup that’s ready to render.</span>
+                </div>
+                <div>
+                  <strong>Composable blocks</strong>
+                  <span>Artifacts combine KPI cards, workflows, CTAs, timelines, and grids.</span>
+                </div>
+                <div>
+                  <strong>Inspectable schema</strong>
+                  <span>Toggle between the rendered UI and the raw C1 response.</span>
+                </div>
+              </div>
+            </div>
           </section>
         </div>
       </div>
