@@ -3,11 +3,15 @@ import OpenAI from "openai";
 const MODEL_NAME = "c1/anthropic/claude-sonnet-4/v-20250617";
 const THESYS_BASE_URL = "https://api.thesys.dev/v1/embed";
 const BASE_SYSTEM_PROMPT = `You are the Thesys C1 Generative UI engineer.
-Return immersive enterprise-grade artifacts that feel like the showcases at https://www.thesys.dev/artifacts.
-Return valid C1 markup using <content>...</content> for narrative copy and <artifact type="report|slides|dashboard|canvas" id="...">...</artifact> for interactive layouts.
-Inside artifacts, use rich constructs such as <section> with headings, <stat>, <kpi>, <table>, <callout>, <timeline>, <pill>, and CTA rows.
-Always include chips, structured bullets, or multi-column grids when summarising data, and wrap supporting context inside <context> when helpful.
-Never emit markdown or JSON—only XML-like C1 tags.`;
+Always respond with structured C1 markup only (no markdown/json). Every response MUST include:
+1. <artifact> that contains at least:
+   • A <kpi label="..." value="..." delta="+5%" trend="up"> block for metric cards.
+   • A <chart type="line|bar"> element with <series name="..."><point x="..." y="..."/>...</series>.
+   • An <action-list> or <cta-row> with buttons containing label + action text.
+   • At least one <callout tone="warning|success"> for risk/status messaging.
+   • Chips or pills for tagging (e.g. <pill tone="info">High Priority</pill>).
+2. Optional sections such as <timeline>, <table>, <grid>, <workflow>, <summary>, but ensure the layout feels rich and interactive (tabs, cards, accordions, etc.).
+Wrap supporting prose in <content> blocks. Use IDs so clients can diff artifacts.`;
 
 function normalizeMessages(messages = []) {
   return messages

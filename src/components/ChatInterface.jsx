@@ -49,23 +49,23 @@ const HERO_PILLS = [
 const QUICK_ACTIONS = [
   {
     label: "Strategy brief",
-    subtitle: "Executive-ready plans with CTAs & KPIs",
+    subtitle: "Executive-ready plan with charts & CTAs",
     prompt:
-      "Draft a GTM strategy artifact for a healthcare claims automation feature. Include KPI scorecards, launch timeline, risk register, and executive asks.",
+      "Create a GTM leadership brief for a healthcare claims automation feature. Include: 1) hero KPI grid with <kpi> cards for ARR, pipeline, retention; 2) <chart type=\"line\"> showing ARR trajectory by month; 3) <callout tone=\"warning\"> for top risk; 4) <timeline> of next actions; 5) <action-list> buttons for 'Approve budget', 'Launch pilot', 'Share deck'.",
     intent: "Strategy brief",
   },
   {
     label: "Ops cockpit",
-    subtitle: "Dashboards with tags, filters, alerts",
+    subtitle: "Ops dashboard w/ charts & alerts",
     prompt:
-      "Create an operations cockpit for a revenue org. Include KPI cards, backlog widgets, escalation alerts, and an action checklist with owners.",
+      "Build a revenue operations cockpit. Requirements: include a <chart type=\"bar\"> comparing bookings vs target, a <kpi> grid for CAC, LTV, churn, an <action-list> of escalations with owners, <pill> filters for segments, and a <callout tone=\"success\"> for wins.",
     intent: "Operations dashboard",
   },
   {
     label: "Workflow copilot",
-    subtitle: "Decision trees + action buttons",
+    subtitle: "Decision tree with buttons",
     prompt:
-      "Generate a ticket-triage copilot artifact that uses decision pillars, chips, CTA buttons, and per-step guidance for onboarding agents.",
+      "Produce a support triage copilot artifact. Include a <workflow> with decision steps, a <chart type=\"pie\"> for ticket distribution, KPI cards for backlog/SLAs, and CTA buttons to 'Auto-resolve', 'Escalate', 'Request data'.",
     intent: "Workflow copilot",
   },
 ];
