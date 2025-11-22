@@ -33,36 +33,6 @@ Focus especially on the "${intent}" use case.
 Ensure the artifact feels bespoke with tailored KPIs, tags, and CTAs for that scenario.`;
 }
 
-function extractC1FromResponse(response) {
-  const outputs = response.output ?? [];
-
-  for (const output of outputs) {
-    if (output.type !== "message") {
-      continue;
-    }
-
-    const parts = output.content ?? [];
-    const text = parts
-      .map((part) => {
-        if (part.type === "output_text") {
-          return part.text ?? "";
-        }
-        if (typeof part === "string") {
-          return part;
-        }
-        return "";
-      })
-      .join("")
-      .trim();
-
-    if (text) {
-      return text;
-    }
-  }
-
-  return "";
-}
-
 export async function POST(request) {
   const apiKey = process.env.THESYS_API_KEY;
 
@@ -102,17 +72,17 @@ export async function POST(request) {
   });
 
   try {
-    const completion = await client.responses.create({
+    const completion = await client.chat.completions.create({
       model: MODEL_NAME,
-      input: [
+      messages: [
         { role: "system", content: buildSystemMessage(intent) },
         ...sanitizedMessages,
       ],
-      modalities: ["text", "c1"],
+      temperature: 0.2,
       stream: false,
     });
 
-    const artifact = extractC1FromResponse(completion);
+    const artifact = completion.choices?.[0]?.message?.content?.trim() ?? "";
 
     return new Response(JSON.stringify({ artifact }), {
       status: 200,
