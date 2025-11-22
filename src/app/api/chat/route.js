@@ -1,6 +1,7 @@
+import OpenAI from "openai";
+
 const MODEL_NAME = "c1/anthropic/claude-sonnet-4/v-20250617";
 const THESYS_BASE_URL = "https://api.thesys.dev/v1/embed";
-const RESPONSE_PATH = `${THESYS_BASE_URL}/responses`;
 const BASE_SYSTEM_PROMPT = `You are the Thesys C1 Generative UI engineer.
 Return immersive enterprise-grade artifacts that feel like the showcases at https://www.thesys.dev/artifacts.
 Stream valid C1 markup using <content>...</content> for narrative copy and <artifact type="report|slides|dashboard|canvas" id="...">...</artifact> for interactive layouts.
@@ -65,47 +66,26 @@ export async function POST(request) {
     });
   }
 
-  const payload = {
-    model: MODEL_NAME,
-    input: [
-      { role: "system", content: buildSystemMessage(intent) },
-      ...sanitizedMessages,
-    ],
-    modalities: ["text", "c1"],
-    stream: true,
-  };
+  const client = new OpenAI({
+    apiKey,
+    baseURL: THESYS_BASE_URL,
+  });
 
   try {
-    const upstream = await fetch(RESPONSE_PATH, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(payload),
+    const stream = await client.responses.stream({
+      model: MODEL_NAME,
+      input: [
+        { role: "system", content: buildSystemMessage(intent) },
+        ...sanitizedMessages,
+      ],
+      modalities: ["text", "c1"],
+      stream: true,
     });
 
-    if (!upstream.ok || !upstream.body) {
-      const errorPayload = await upstream.text();
-      console.error("Thesys Responses API error:", upstream.status, errorPayload);
-      return new Response(
-        JSON.stringify({
-          error:
-            errorPayload || "Failed to stream response from Thesys Responses API",
-        }),
-        {
-          status: upstream.status || 502,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
-    }
-
-    return new Response(upstream.body, {
+    return new Response(stream.toReadableStream(), {
       status: 200,
       headers: {
-        "Content-Type":
-          upstream.headers.get("content-type") ??
-          "text/event-stream; charset=utf-8",
+        "Content-Type": "text/event-stream; charset=utf-8",
         "Cache-Control": "no-cache, no-transform",
         Connection: "keep-alive",
       },
